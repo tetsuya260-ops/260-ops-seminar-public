@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QRコード - セミナー予約システム</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container admin-container">
+        <header>
+            <h1>QRコード生成</h1>
+            <a href="/admin" class="back-link">← 管理画面に戻る</a>
+        </header>
+        
+        <main>
+            <section class="qr-section">
+                <div class="qr-info">
+                    <h2>イベント予約用QRコード</h2>
+                    <p class="qr-description">
+                        このQRコードをスマートフォンで読み取ると、イベント予約ページに直接アクセスできます。
+                    </p>
+                </div>
+                
+                <div class="qr-container">
+                    <div class="qr-code">
+                        <img src="<%= qrCodeUrl %>" alt="QRコード" />
+                    </div>
+                    
+                    <div class="qr-details">
+                        <h3>URL</h3>
+                        <div class="url-box">
+                            <input type="text" value="<%= url %>" readonly id="urlInput">
+                            <button onclick="copyURL()" class="copy-btn">📋 コピー</button>
+                        </div>
+                        
+                        <div class="qr-actions">
+                            <button onclick="downloadQR()" class="action-btn download-btn">📥 QRコードをダウンロード</button>
+                            <button onclick="printQR()" class="action-btn print-btn">🖨️ 印刷</button>
+                            <a href="<%= url %>" target="_blank" class="action-btn preview-btn">👁️ プレビュー</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="usage-instructions">
+                    <h3>使用方法</h3>
+                    <ol>
+                        <li>QRコードを印刷またはダウンロードしてください</li>
+                        <li>イベント会場や配布資料にQRコードを掲載してください</li>
+                        <li>参加希望者がスマートフォンでQRコードを読み取ります</li>
+                        <li>予約フォームに必要事項を入力して予約完了です</li>
+                    </ol>
+                </div>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 予約システム</p>
+        </footer>
+    </div>
+    
+    <script>
+        function copyURL() {
+            const urlInput = document.getElementById('urlInput');
+            urlInput.select();
+            urlInput.setSelectionRange(0, 99999); // モバイル対応
+            
+            try {
+                document.execCommand('copy');
+                showToast('URLがコピーされました！');
+            } catch (err) {
+                console.error('コピーに失敗しました:', err);
+                showToast('コピーに失敗しました', 'error');
+            }
+        }
+        
+        function downloadQR() {
+            const qrImage = document.querySelector('.qr-code img');
+            const link = document.createElement('a');
+            link.download = 'event_qr_code_<%= eventId %>.png';
+            link.href = qrImage.src;
+            link.click();
+        }
+        
+        function printQR() {
+            window.print();
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+    </script>
+    
+    <style>
+        @media print {
+            .back-link, .qr-actions, .usage-instructions, footer {
+                display: none !important;
+            }
+            
+            .qr-container {
+                text-align: center;
+            }
+            
+            .qr-code img {
+                max-width: 300px;
+            }
+        }
+        
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 24px;
+            border-radius: 4px;
+            color: white;
+            font-weight: bold;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast-success {
+            background-color: #28a745;
+        }
+        
+        .toast-error {
+            background-color: #dc3545;
+        }
+    </style>
+</body>
+</html>

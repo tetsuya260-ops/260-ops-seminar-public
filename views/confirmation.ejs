@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約完了 - 予約システム</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>予約完了</h1>
+        </header>
+        
+        <main>
+            <div class="success-message">
+                <div class="success-icon">✅</div>
+                <h2>ご予約ありがとうございました</h2>
+                <p><%= reservation.event_type === 'business' ? 'セミナー' : 'イベント' %>の予約が完了いたしました。</p>
+            </div>
+            
+            <div class="reservation-details">
+                <h3>予約内容</h3>
+                <table class="details-table">
+                    <tr>
+                        <td>予約コード</td>
+                        <td class="reservation-code"><%= reservation.reservation_code %></td>
+                    </tr>
+                    <tr>
+                        <td><%= reservation.event_type === 'business' ? 'セミナー名' : 'イベント名' %></td>
+                        <td><%= reservation.title %></td>
+                    </tr>
+                    <tr>
+                        <td>開催日時</td>
+                        <td><%= reservation.formatted_date %> <%= reservation.formatted_time %></td>
+                    </tr>
+                    
+                    <!-- 動的フィールドの表示 -->
+                    <% Object.keys(reservation.parsed_data).forEach(function(key) { %>
+                        <% if (key !== 'participation_method' && reservation.parsed_data[key]) { %>
+                            <tr>
+                                <td>
+                                    <% if (key === 'participant_name') { %>参加者氏名
+                                    <% } else if (key === 'company_name') { %>会社名
+                                    <% } else if (key === 'position') { %>役職
+                                    <% } else if (key === 'contact_info') { %>連絡先
+                                    <% } else if (key === 'email') { %>メールアドレス
+                                    <% } else if (key === 'phone') { %>電話番号
+                                    <% } else if (key === 'age') { %>年齢
+                                    <% } else if (key === 'gender') { %>性別
+                                    <% } else if (key === 'occupation') { %>職業
+                                    <% } else if (key === 'address') { %>住所
+                                    <% } else if (key === 'dietary_restrictions') { %>食事制限
+                                    <% } else if (key === 'emergency_contact') { %>緊急連絡先
+                                    <% } else { %><%= key %>
+                                    <% } %>
+                                </td>
+                                <td><%= reservation.parsed_data[key] %></td>
+                            </tr>
+                        <% } %>
+                    <% }); %>
+                    
+                    <!-- 参加方法（最後に表示） -->
+                    <% if (reservation.parsed_data.participation_method) { %>
+                        <tr>
+                            <td>参加方法</td>
+                            <td><%= reservation.parsed_data.participation_method %></td>
+                        </tr>
+                    <% } %>
+                </table>
+            </div>
+            
+            <div class="important-notice">
+                <h3>重要なお知らせ</h3>
+                <ul>
+                    <li><strong>予約コード「<%= reservation.reservation_code %>」</strong>は当日まで大切に保管してください。</li>
+                    <li>キャンセルをご希望の場合は、下記のボタンから手続きできます。</li>
+                    <li><%= reservation.event_type === 'business' ? 'セミナー' : 'イベント' %>開始時間の15分前までにお越しください。</li>
+                    <% if (reservation.parsed_data.participation_method) { %>
+                        <li>選択された参加方法: <strong><%= reservation.parsed_data.participation_method %></strong></li>
+                    <% } %>
+                </ul>
+            </div>
+            
+            <div class="action-buttons">
+                <button onclick="printPage()" class="print-btn">📄 この画面を印刷</button>
+                <button onclick="showCancelForm()" class="cancel-btn">❌ キャンセル</button>
+                <a href="/" class="home-btn">🏠 ホームに戻る</a>
+            </div>
+            
+            <!-- キャンセルフォーム（初期状態では非表示） -->
+            <div id="cancelForm" class="cancel-form" style="display: none;">
+                <h3>予約キャンセル</h3>
+                <p>本当にキャンセルしますか？この操作は取り消せません。</p>
+                <form action="/cancel" method="POST">
+                    <input type="hidden" name="reservation_code" value="<%= reservation.reservation_code %>">
+                    <div class="cancel-buttons">
+                        <button type="button" onclick="hideCancelForm()" class="cancel-no">戻る</button>
+                        <button type="submit" class="cancel-yes">キャンセルする</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 予約システム</p>
+        </footer>
+    </div>
+    
+    <script>
+        function printPage() {
+            window.print();
+        }
+        
+        function showCancelForm() {
+            document.getElementById('cancelForm').style.display = 'block';
+        }
+        
+        function hideCancelForm() {
+            document.getElementById('cancelForm').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

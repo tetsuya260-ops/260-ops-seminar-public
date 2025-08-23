@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約フォーム - <%= event.title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><%= event.event_type === 'business' ? 'セミナー' : 'イベント' %>予約</h1>
+            <a href="/" class="back-link">← 一覧に戻る</a>
+        </header>
+        
+        <main>
+            <div class="event-summary <%= event.event_type %>">
+                <h2><%= event.title %></h2>
+                <div class="event-details">
+                    <p><span class="icon">📅</span> <%= event.formatted_date %> <%= event.formatted_time %></p>
+                    <p><span class="icon">👥</span> 残り <%= event.available_count %> 席 / 定員 <%= event.capacity %> 名</p>
+                    <% if (event.description) { %>
+                        <p class="description"><%= event.description %></p>
+                    <% } %>
+                </div>
+            </div>
+            
+            <form action="/book" method="POST" class="booking-form" id="bookingForm">
+                <input type="hidden" name="event_id" value="<%= event.id %>">
+                
+                <!-- 参加方法選択（選択肢がある場合） -->
+                <% if (event.parsed_options && event.parsed_options.length > 0) { %>
+                    <div class="form-group">
+                        <label for="participation_method">参加方法 <span class="required">*</span></label>
+                        <select id="participation_method" name="participation_method" required>
+                            <option value="">選択してください</option>
+                            <% event.parsed_options.forEach(function(option) { %>
+                                <option value="<%= option %>"><%= option %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                <% } %>
+                
+                <!-- 動的フォームフィールド -->
+                <% formFields.forEach(function(field, index) { %>
+                    <div class="form-group">
+                        <label for="<%= field.field_key %>">
+                            <%= field.field_name %>
+                            <% if (field.required) { %>
+                                <span class="required">*</span>
+                            <% } %>
+                        </label>
+                        
+                        <% if (field.field_type === 'text') { %>
+                            <input type="text" 
+                                   id="<%= field.field_key %>" 
+                                   name="<%= field.field_key %>" 
+                                   <%= field.required ? 'required' : '' %>
+                                   placeholder="<%= field.placeholder || '' %>">
+                        
+                        <% } else if (field.field_type === 'email') { %>
+                            <input type="email" 
+                                   id="<%= field.field_key %>" 
+                                   name="<%= field.field_key %>" 
+                                   <%= field.required ? 'required' : '' %>
+                                   placeholder="<%= field.placeholder || '' %>">
+                        
+                        <% } else if (field.field_type === 'tel') { %>
+                            <input type="tel" 
+                                   id="<%= field.field_key %>" 
+                                   name="<%= field.field_key %>" 
+                                   <%= field.required ? 'required' : '' %>
+                                   placeholder="<%= field.placeholder || '' %>">
+                        
+                        <% } else if (field.field_type === 'number') { %>
+                            <input type="number" 
+                                   id="<%= field.field_key %>" 
+                                   name="<%= field.field_key %>" 
+                                   <%= field.required ? 'required' : '' %>
+                                   placeholder="<%= field.placeholder || '' %>">
+                        
+                        <% } else if (field.field_type === 'select') { %>
+                            <select id="<%= field.field_key %>" 
+                                    name="<%= field.field_key %>" 
+                                    <%= field.required ? 'required' : '' %>>
+                                <option value="">選択してください</option>
+                                <% if (field.field_options) { %>
+                                    <% field.field_options.forEach(function(option) { %>
+                                        <option value="<%= option %>"><%= option %></option>
+                                    <% }); %>
+                                <% } %>
+                            </select>
+                        
+                        <% } else if (field.field_type === 'textarea') { %>
+                            <textarea id="<%= field.field_key %>" 
+                                      name="<%= field.field_key %>" 
+                                      <%= field.required ? 'required' : '' %>
+                                      placeholder="<%= field.placeholder || '' %>"
+                                      rows="3"></textarea>
+                        <% } %>
+                        
+                        <% if (field.description) { %>
+                            <small class="field-description"><%= field.description %></small>
+                        <% } %>
+                    </div>
+                <% }); %>
+                
+                <button type="submit" class="submit-btn">予約を確定する</button>
+            </form>
+            
+            <div class="notice">
+                <h3>ご注意事項</h3>
+                <ul>
+                    <li>予約確定後、予約コードが発行されます。当日までに大切に保管してください。</li>
+                    <li>キャンセルをご希望の場合は、予約コードを使用してキャンセルできます。</li>
+                    <li>定員に達し次第、受付を終了いたします。</li>
+                    <% if (event.parsed_options && event.parsed_options.length > 0) { %>
+                        <li>参加方法によって料金が異なる場合があります。</li>
+                    <% } %>
+                </ul>
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 予約システム</p>
+        </footer>
+    </div>
+    
+    <script>
+        // フォームバリデーション
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            const inputs = this.querySelectorAll('input[required], select[required], textarea[required]');
+            let isValid = true;
+            
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    isValid = false;
+                    input.classList.add('error');
+                    showFieldError(input, '必須項目です');
+                } else {
+                    input.classList.remove('error');
+                    clearFieldError(input);
+                    
+                    // 特定フィールドのバリデーション
+                    if (input.type === 'email') {
+                        if (!validateEmail(input.value)) {
+                            isValid = false;
+                            input.classList.add('error');
+                            showFieldError(input, '正しいメールアドレスを入力してください');
+                        }
+                    }
+                    
+                    if (input.type === 'tel') {
+                        if (!validatePhoneNumber(input.value)) {
+                            isValid = false;
+                            input.classList.add('error');
+                            showFieldError(input, '正しい電話番号を入力してください');
+                        }
+                    }
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('入力内容に不備があります。エラーメッセージをご確認ください。');
+            }
+        });
+        
+        // フィールドエラーの表示
+        function showFieldError(input, message) {
+            clearFieldError(input);
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.textContent = message;
+            errorDiv.style.color = '#dc3545';
+            errorDiv.style.fontSize = '0.8rem';
+            errorDiv.style.marginTop = '4px';
+            
+            input.parentNode.appendChild(errorDiv);
+        }
+        
+        // フィールドエラーのクリア
+        function clearFieldError(input) {
+            const errorMessage = input.parentNode.querySelector('.error-message');
+            if (errorMessage) {
+                errorMessage.remove();
+            }
+        }
+        
+        // バリデーション関数
+        function validateEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+        
+        function validatePhoneNumber(phone) {
+            const phoneRegex = /^[\d\-\+\(\)\s]+$/;
+            return phoneRegex.test(phone) && phone.length >= 10;
+        }
+        
+        // 電話番号の自動フォーマット
+        document.querySelectorAll('input[type="tel"]').forEach(input => {
+            input.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/[^\d]/g, '');
+                
+                if (value.length >= 6) {
+                    if (value.length <= 10) {
+                        value = value.replace(/(\d{2,4})(\d{2,4})(\d{2,4})/, '$1-$2-$3');
+                    } else {
+                        value = value.replace(/(\d{2,4})(\d{2,4})(\d{4})/, '$1-$2-$3');
+                    }
+                }
+                
+                e.target.value = value;
+            });
+        });
+        
+        // リアルタイムバリデーション
+        document.querySelectorAll('input, select, textarea').forEach(input => {
+            input.addEventListener('blur', function() {
+                if (this.hasAttribute('required') && !this.value.trim()) {
+                    this.classList.add('error');
+                    showFieldError(this, '必須項目です');
+                } else {
+                    this.classList.remove('error');
+                    clearFieldError(this);
+                }
+            });
+            
+            input.addEventListener('input', function() {
+                if (this.classList.contains('error') && this.value.trim()) {
+                    this.classList.remove('error');
+                    clearFieldError(this);
+                }
+            });
+        });
+    </script>
+    
+    <style>
+        .field-description {
+            color: #666;
+            font-style: italic;
+            font-size: 0.85rem;
+            margin-top: 4px;
+            display: block;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            font-size: 0.8rem;
+            margin-top: 4px;
+            display: block;
+        }
+        
+        .form-group input.error,
+        .form-group select.error,
+        .form-group textarea.error {
+            border-color: #dc3545;
+            box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>満席 - <%= event.title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><%= event.event_type === 'business' ? 'セミナー' : 'イベント' %>予約</h1>
+            <a href="/" class="back-link">← 一覧に戻る</a>
+        </header>
+        
+        <main>
+            <div class="event-summary <%= event.event_type %>">
+                <h2><%= event.title %></h2>
+                <div class="event-details">
+                    <p><span class="icon">📅</span> <%= event.formatted_date %> <%= event.formatted_time %></p>
+                    <p class="description"><%= event.description %></p>
+                </div>
+            </div>
+            
+            <div class="full-message">
+                <div class="full-icon">😔</div>
+                <h3>申し訳ございません</h3>
+                <p>この<%= event.event_type === 'business' ? 'セミナー' : 'イベント' %>は定員に達しているため、予約を受け付けることができません。</p>
+                <p>他の<%= event.event_type === 'business' ? 'セミナー' : 'イベント' %>もご検討ください。</p>
+            </div>
+            
+            <div class="action-buttons">
+                <a href="/" class="home-btn">🏠 他のイベントを見る</a>
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 予約システム</p>
+        </footer>
+    </div>
+</body>
+</html>

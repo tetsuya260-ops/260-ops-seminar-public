@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>イベント一覧 - 予約システム</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>予約システム</h1>
+            <p class="subtitle">お申し込みご希望のイベントを選択してください</p>
+        </header>
+        
+        <main>
+            <% if (events.length === 0) { %>
+                <div class="no-events">
+                    <p>現在開催予定のイベントはございません。</p>
+                </div>
+            <% } else { %>
+                <div class="events-grid">
+                    <% events.forEach(function(event) { %>
+                        <div class="event-card <%= event.event_type %>">
+                            <div class="event-type-badge">
+                                <% if (event.event_type === 'business') { %>
+                                    💼 ビジネス
+                                <% } else { %>
+                                    🎉 イベント
+                                <% } %>
+                            </div>
+                            <h3><%= event.title %></h3>
+                            <div class="event-info">
+                                <p class="date-time">
+                                    <span class="icon">📅</span>
+                                    <%= event.formatted_date %> <%= event.formatted_time %>
+                                </p>
+                                <p class="description"><%= event.description %></p>
+                                <% if (event.parsed_options && event.parsed_options.length > 0) { %>
+                                    <div class="participation-preview">
+                                        <span class="icon">🍽️</span>
+                                        <%= event.parsed_options.length %>つの選択肢あり
+                                    </div>
+                                <% } %>
+                                <div class="capacity-info">
+                                    <span class="available-count <%= event.available_count <= 1 ? 'low' : '' %>">
+                                        残り <%= event.available_count %> 席
+                                    </span>
+                                    <span class="total-capacity">/ 定員 <%= event.capacity %> 名</span>
+                                </div>
+                            </div>
+                            
+                            <% if (event.available_count > 0) { %>
+                                <a href="/event/<%= event.id %>" class="book-btn">予約する</a>
+                            <% } else { %>
+                                <button class="book-btn disabled" disabled>満席</button>
+                            <% } %>
+                        </div>
+                    <% }); %>
+                </div>
+            <% } %>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 予約システム</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>キャンセル完了 - セミナー予約システム</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>キャンセル完了</h1>
+        </header>
+        
+        <main>
+            <div class="cancel-success-message">
+                <div class="cancel-icon">❌</div>
+                <h2>キャンセルが完了しました</h2>
+                <p>予約コード「<%= reservation_code %>」の予約がキャンセルされました。</p>
+                <p>またの機会にお申し込みください。</p>
+            </div>
+            
+            <div class="action-buttons">
+                <a href="/" class="home-btn">🏠 ホームに戻る</a>
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 予約システム</p>
+        </footer>
+    </div>
+</body>
+</html>

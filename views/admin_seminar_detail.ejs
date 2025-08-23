@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約者一覧 - <%= seminar.title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container admin-container">
+        <header>
+            <h1>予約者一覧</h1>
+            <a href="/admin" class="back-link">← 管理画面に戻る</a>
+        </header>
+        
+        <main>
+            <!-- セミナー情報 -->
+            <section class="seminar-info-section">
+                <div class="seminar-summary">
+                    <h2><%= seminar.title %></h2>
+                    <div class="seminar-details">
+                        <p><span class="icon">📅</span> <%= seminar.formatted_date %> <%= seminar.formatted_time %></p>
+                        <p><span class="icon">👥</span> <%= reservations.length %>/<%= seminar.capacity %> 名</p>
+                        <% if (seminar.description) { %>
+                            <p class="description"><%= seminar.description %></p>
+                        <% } %>
+                    </div>
+                    
+                    <div class="quick-actions">
+                        <a href="/admin/qr/<%= seminar.id %>" class="action-btn qr-btn">📱 QRコード生成</a>
+                        <button onclick="printReservations()" class="action-btn print-btn">🖨️ 印刷</button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 予約者リスト -->
+            <section class="reservations-section">
+                <h3>予約者リスト</h3>
+                <% if (reservations.length === 0) { %>
+                    <div class="no-reservations">
+                        <p>まだ予約がありません。</p>
+                    </div>
+                <% } else { %>
+                    <div class="reservations-table-container">
+                        <table class="reservations-table">
+                            <thead>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>予約コード</th>
+                                    <th>会社名</th>
+                                    <th>役職</th>
+                                    <th>参加者氏名</th>
+                                    <th>電話番号</th>
+                                    <th>予約日時</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% reservations.forEach(function(reservation, index) { %>
+                                    <tr>
+                                        <td><%= index + 1 %></td>
+                                        <td class="reservation-code"><%= reservation.reservation_code %></td>
+                                        <td><%= reservation.company_name %></td>
+                                        <td><%= reservation.position %></td>
+                                        <td><%= reservation.participant_name %></td>
+                                        <td><%= reservation.phone_number %></td>
+                                        <td><%= new Date(reservation.created_at).toLocaleString('ja-JP') %></td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 統計情報 -->
+                    <div class="statistics">
+                        <h4>統計情報</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-label">総予約数</span>
+                                <span class="stat-value"><%= reservations.length %></span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">残り席数</span>
+                                <span class="stat-value"><%= seminar.capacity - reservations.length %></span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">稼働率</span>
+                                <span class="stat-value"><%= Math.round((reservations.length / seminar.capacity) * 100) %>%</span>
+                            </div>
+                        </div>
+                    </div>
+                <% } %>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 セミナー予約システム</p>
+        </footer>
+    </div>
+    
+    <script>
+        function printReservations() {
+            window.print();
+        }
+        
+        // テーブルの行をクリックで詳細表示（モバイル対応）
+        document.querySelectorAll('.reservations-table tbody tr').forEach(row => {
+            row.addEventListener('click', function() {
+                this.classList.toggle('expanded');
+            });
+        });
+    </script>
+    
+    <style>
+        @media print {
+            .quick-actions, .back-link, footer, header .back-link {
+                display: none !important;
+            }
+            
+            .container {
+                margin: 0;
+                padding: 0;
+            }
+            
+            .reservations-table {
+                font-size: 12px;
+            }
+        }
+    </style>
+</body>
+</html>

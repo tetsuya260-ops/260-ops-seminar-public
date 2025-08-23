@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約者一覧 - <%= event.title %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container admin-container">
+        <header>
+            <h1>予約者一覧</h1>
+            <a href="/admin" class="back-link">← 管理画面に戻る</a>
+        </header>
+        
+        <main>
+            <!-- イベント情報 -->
+            <section class="event-info-section">
+                <div class="event-summary">
+                    <div class="event-type-badge <%= event.event_type %>">
+                        <% if (event.event_type === 'business') { %>
+                            💼 ビジネス
+                        <% } else { %>
+                            🎉 イベント
+                        <% } %>
+                    </div>
+                    <h2><%= event.title %></h2>
+                    <div class="event-details">
+                        <p><span class="icon">📅</span> <%= event.formatted_date %> <%= event.formatted_time %></p>
+                        <p><span class="icon">👥</span> <%= reservations.length %>/<%= event.capacity %> 名</p>
+                        <% if (event.description) { %>
+                            <p class="description"><%= event.description %></p>
+                        <% } %>
+                    </div>
+                    
+                    <div class="quick-actions">
+                        <a href="/admin/qr/<%= event.id %>" class="action-btn qr-btn">📱 QRコード生成</a>
+                        <button onclick="printReservations()" class="action-btn print-btn">🖨️ 印刷</button>
+                        <button onclick="exportCSV()" class="action-btn export-btn">📊 CSV出力</button>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 予約者リスト -->
+            <section class="reservations-section">
+                <h3>予約者リスト</h3>
+                <% if (reservations.length === 0) { %>
+                    <div class="no-reservations">
+                        <p>まだ予約がありません。</p>
+                    </div>
+                <% } else { %>
+                    <div class="reservations-table-container">
+                        <table class="reservations-table" id="reservationsTable">
+                            <thead>
+                                <tr>
+                                    <th>No.</th>
+                                    <th>予約コード</th>
+                                    <% 
+                                        // 全予約データから使用されているフィールドを特定
+                                        const allFields = new Set();
+                                        reservations.forEach(reservation => {
+                                            Object.keys(reservation.parsed_data).forEach(key => {
+                                                allFields.add(key);
+                                            });
+                                        });
+                                        const fieldKeys = Array.from(allFields);
+                                    %>
+                                    <% fieldKeys.forEach(function(key) { %>
+                                        <th>
+                                            <% if (key === 'participant_name') { %>参加者氏名
+                                            <% } else if (key === 'company_name') { %>会社名
+                                            <% } else if (key === 'position') { %>役職
+                                            <% } else if (key === 'contact_info') { %>連絡先
+                                            <% } else if (key === 'email') { %>メールアドレス
+                                            <% } else if (key === 'phone') { %>電話番号
+                                            <% } else if (key === 'age') { %>年齢
+                                            <% } else if (key === 'gender') { %>性別
+                                            <% } else if (key === 'occupation') { %>職業
+                                            <% } else if (key === 'address') { %>住所
+                                            <% } else if (key === 'dietary_restrictions') { %>食事制限
+                                            <% } else if (key === 'emergency_contact') { %>緊急連絡先
+                                            <% } else if (key === 'participation_method') { %>参加方法
+                                            <% } else { %><%= key %>
+                                            <% } %>
+                                        </th>
+                                    <% }); %>
+                                    <th>予約日時</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% reservations.forEach(function(reservation, index) { %>
+                                    <tr>
+                                        <td><%= index + 1 %></td>
+                                        <td class="reservation-code"><%= reservation.reservation_code %></td>
+                                        <% fieldKeys.forEach(function(key) { %>
+                                            <td><%= reservation.parsed_data[key] || '-' %></td>
+                                        <% }); %>
+                                        <td><%= new Date(reservation.created_at).toLocaleString('ja-JP') %></td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 統計情報 -->
+                    <div class="statistics">
+                        <h4>統計情報</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-label">総予約数</span>
+                                <span class="stat-value"><%= reservations.length %></span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">残り席数</span>
+                                <span class="stat-value"><%= event.capacity - reservations.length %></span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">稼働率</span>
+                                <span class="stat-value"><%= Math.round((reservations.length / event.capacity) * 100) %>%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 参加方法別統計（選択肢がある場合） -->
+                    <% if (event.participation_options) { %>
+                        <div class="participation-stats">
+                            <h4>参加方法別統計</h4>
+                            <div class="participation-grid">
+                                <% 
+                                    const options = JSON.parse(event.participation_options);
+                                    options.forEach(option => {
+                                        const count = reservations.filter(r => r.parsed_data.participation_method === option).length;
+                                %>
+                                    <div class="participation-item">
+                                        <span class="participation-option"><%= option %></span>
+                                        <span class="participation-count"><%= count %>名</span>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    <% } %>
+                    
+                    <!-- フィールド別統計 -->
+                    <% if (fieldKeys.includes('gender')) { %>
+                        <div class="field-stats">
+                            <h4>性別統計</h4>
+                            <div class="field-stats-grid">
+                                <% 
+                                    const genderStats = {};
+                                    reservations.forEach(r => {
+                                        const gender = r.parsed_data.gender || '未回答';
+                                        genderStats[gender] = (genderStats[gender] || 0) + 1;
+                                    });
+                                    Object.keys(genderStats).forEach(gender => {
+                                %>
+                                    <div class="field-stat-item">
+                                        <span class="field-stat-label"><%= gender %></span>
+                                        <span class="field-stat-value"><%= genderStats[gender] %>名</span>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    <% } %>
+                <% } %>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 予約システム</p>
+        </footer>
+    </div>
+    
+    <script>
+        function printReservations() {
+            window.print();
+        }
+        
+        function exportCSV() {
+            const table = document.getElementById('reservationsTable');
+            const rows = Array.from(table.querySelectorAll('tr'));
+            
+            const csvContent = rows.map(row => {
+                const cells = Array.from(row.querySelectorAll('th, td'));
+                return cells.map(cell => {
+                    const content = cell.textContent.trim();
+                    // CSVエスケープ処理
+                    if (content.includes(',') || content.includes('"') || content.includes('\n')) {
+                        return `"${content.replace(/"/g, '""')}"`;
+                    }
+                    return content;
+                }).join(',');
+            }).join('\n');
+            
+            // BOM付きでダウンロード（Excel対応）
+            const bom = '\uFEFF';
+            const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            const eventTitle = '<%= event.title %>';
+            const eventDate = '<%= event.date %>';
+            const fileName = `${eventTitle}_予約者一覧_${eventDate}.csv`;
+            
+            if (navigator.msSaveBlob) {
+                // IE対応
+                navigator.msSaveBlob(blob, fileName);
+            } else {
+                link.href = URL.createObjectURL(blob);
+                link.download = fileName;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+        
+        // テーブルの行をクリックで詳細表示（モバイル対応）
+        document.querySelectorAll('.reservations-table tbody tr').forEach(row => {
+            row.addEventListener('click', function() {
+                this.classList.toggle('expanded');
+            });
+        });
+    </script>
+    
+    <style>
+        .event-type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        
+        .event-type-badge.business {
+            background-color: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .event-type-badge.personal {
+            background-color: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .export-btn {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .export-btn:hover {
+            background-color: #218838;
+        }
+        
+        .participation-stats, .field-stats {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .participation-grid, .field-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .participation-item, .field-stat-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .participation-option, .field-stat-label {
+            font-weight: bold;
+        }
+        
+        .participation-count, .field-stat-value {
+            background-color: #007bff;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+        
+        @media print {
+            .quick-actions, .back-link, footer, header .back-link {
+                display: none !important;
+            }
+            
+            .container {
+                margin: 0;
+                padding: 0;
+            }
+            
+            .reservations-table {
+                font-size: 10px;
+            }
+            
+            .reservations-table td, .reservations-table th {
+                padding: 6px 4px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .reservations-table {
+                font-size: 0.7rem;
+            }
+            
+            .reservations-table td, .reservations-table th {
+                padding: 4px 2px;
+            }
+        }
+    </style>
+</body>
+</html>

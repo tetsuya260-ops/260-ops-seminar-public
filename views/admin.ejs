@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理者画面 - 予約システム</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container admin-container">
+        <header>
+            <h1>イベント管理システム</h1>
+            <p class="subtitle">セミナー・イベントの追加・管理・QRコード生成</p>
+        </header>
+        
+        <main>
+            <!-- イベント追加フォーム -->
+            <section class="add-event-section">
+                <h2>新しいイベントを追加</h2>
+                <form action="/admin/add-event" method="POST" class="add-event-form" id="addEventForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="title">イベントタイトル <span class="required">*</span></label>
+                            <input type="text" id="title" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="event_type">イベントタイプ <span class="required">*</span></label>
+                            <select id="event_type" name="event_type" onchange="toggleEventOptions()" required>
+                                <option value="business">ビジネス（セミナー・研修など）</option>
+                                <option value="personal">イベント（食事会・交流会など）</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="date">開催日 <span class="required">*</span></label>
+                            <input type="date" id="date" name="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="time">開催時刻 <span class="required">*</span></label>
+                            <input type="time" id="time" name="time" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="capacity">定員</label>
+                            <input type="number" id="capacity" name="capacity" value="5" min="1" max="50">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description">イベント説明</label>
+                        <textarea id="description" name="description" rows="3" placeholder="イベントの詳細説明を入力してください"></textarea>
+                    </div>
+                    
+                    <!-- 参加方法選択肢（personalイベントの場合に表示） -->
+                    <div class="form-group" id="participationOptions" style="display: none;">
+                        <label for="participation_options">参加方法選択肢</label>
+                        <textarea id="participation_options" name="participation_options" rows="4" 
+                                  placeholder="1行につき1つの選択肢を入力してください&#10;例:&#10;焼肉バイキング 5800円&#10;鉄板ハンバーグ 1800円&#10;ローストビーフ 2500円"></textarea>
+                        <small class="form-help">各行に1つずつ選択肢を入力してください。料金も含めて記入できます。</small>
+                    </div>
+                    
+                    <!-- フォーム項目設定 -->
+                    <div class="form-group">
+                        <label>予約フォームの項目設定</label>
+                        <div class="form-fields-section">
+                            <p class="form-help">お客様に入力してもらう項目を選択してください</p>
+                            <div class="form-fields-grid" id="formFieldsGrid">
+                                <% fieldDefinitions.forEach(function(field) { %>
+                                    <div class="form-field-item">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" name="form_fields[<%= field.field_key %>][enabled]" 
+                                                   value="1" onchange="toggleFieldRequired('<%= field.field_key %>')">
+                                            <span class="checkbox-text">
+                                                <%= field.field_name %>
+                                                <small>(<%= field.field_type %>)</small>
+                                            </span>
+                                        </label>
+                                        <div class="field-options" id="options_<%= field.field_key %>" style="display: none;">
+                                            <label class="required-checkbox">
+                                                <input type="checkbox" name="form_fields[<%= field.field_key %>][required]" value="1">
+                                                <span>必須項目</span>
+                                            </label>
+                                        </div>
+                                        <% if (field.description) { %>
+                                            <small class="field-description"><%= field.description %></small>
+                                        <% } %>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">イベントを追加</button>
+                </form>
+            </section>
+            
+            <!-- イベント一覧 -->
+            <section class="events-section">
+                <h2>イベント一覧</h2>
+                <% if (events.length === 0) { %>
+                    <div class="no-events">
+                        <p>イベントが登録されていません。</p>
+                    </div>
+                <% } else { %>
+                    <div class="admin-events-grid">
+                        <% events.forEach(function(event) { %>
+                            <div class="admin-event-card <%= event.event_type %>">
+                                <div class="event-header">
+                                    <div class="event-title-section">
+                                        <div class="event-type-badge <%= event.event_type %>">
+                                            <% if (event.event_type === 'business') { %>
+                                                💼 ビジネス
+                                            <% } else { %>
+                                                🎉 イベント
+                                            <% } %>
+                                        </div>
+                                        <h3><%= event.title %></h3>
+                                    </div>
+                                    <div class="event-status">
+                                        <span class="capacity-info">
+                                            <%= event.reserved_count %>/<%= event.capacity %> 名
+                                        </span>
+                                        <% if (event.available_count <= 0) { %>
+                                            <span class="status-badge full">満席</span>
+                                        <% } else if (event.available_count <= 2) { %>
+                                            <span class="status-badge low">残りわずか</span>
+                                        <% } else { %>
+                                            <span class="status-badge available">受付中</span>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                
+                                <div class="event-info">
+                                    <p class="date-time">
+                                        <span class="icon">📅</span>
+                                        <%= event.formatted_date %> <%= event.formatted_time %>
+                                    </p>
+                                    <% if (event.description) { %>
+                                        <p class="description"><%= event.description %></p>
+                                    <% } %>
+                                    <% if (event.participation_options) { %>
+                                        <p class="participation-info">
+                                            <span class="icon">🍽️</span>
+                                            <%= JSON.parse(event.participation_options).length %>つの選択肢あり
+                                        </p>
+                                    <% } %>
+                                    <% if (event.form_fields) { %>
+                                        <p class="form-fields-info">
+                                            <span class="icon">📝</span>
+                                            <%= Object.keys(JSON.parse(event.form_fields)).length %>個の入力項目
+                                        </p>
+                                    <% } %>
+                                </div>
+                                
+                                <div class="admin-actions">
+                                    <a href="/admin/event/<%= event.id %>" class="action-btn detail-btn">
+                                        👥 予約者一覧
+                                    </a>
+                                    <a href="/admin/qr/<%= event.id %>" class="action-btn qr-btn">
+                                        📱 QRコード
+                                    </a>
+                                    <a href="/event/<%= event.id %>" class="action-btn preview-btn" target="_blank">
+                                        👁️ プレビュー
+                                    </a>
+                                    <button onclick="confirmDeleteEvent('<%= event.id %>', '<%= event.title %>')" 
+                                            class="action-btn delete-btn">
+                                        🗑️ 削除
+                                    </button>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } %>
+            </section>
+        </main>
+        
+        <footer>
+            <p>&copy; 2024 予約システム | <a href="/">一般サイトを見る</a></p>
+        </footer>
+    </div>
+    
+    <script>
+        // 今日の日付を最小値として設定
+        document.getElementById('date').min = new Date().toISOString().split('T')[0];
+        
+        // イベントタイプに応じて表示項目を切り替え
+        function toggleEventOptions() {
+            const eventType = document.getElementById('event_type').value;
+            const participationOptions = document.getElementById('participationOptions');
+            
+            if (eventType === 'personal') {
+                participationOptions.style.display = 'block';
+                // 個人イベントの場合のデフォルト項目選択
+                setDefaultFields(['participant_name', 'contact_info', 'age', 'dietary_restrictions']);
+            } else {
+                participationOptions.style.display = 'none';
+                document.getElementById('participation_options').value = '';
+                // ビジネスイベントの場合のデフォルト項目選択
+                setDefaultFields(['participant_name', 'company_name', 'position', 'contact_info']);
+            }
+        }
+        
+        // デフォルトフィールドを設定
+        function setDefaultFields(defaultFields) {
+            // すべてのチェックボックスをリセット
+            document.querySelectorAll('input[name*="form_fields"]').forEach(input => {
+                input.checked = false;
+            });
+            document.querySelectorAll('.field-options').forEach(option => {
+                option.style.display = 'none';
+            });
+            
+            // デフォルトフィールドを選択
+            defaultFields.forEach(fieldKey => {
+                const checkbox = document.querySelector(`input[name="form_fields[${fieldKey}][enabled]"]`);
+                const requiredCheckbox = document.querySelector(`input[name="form_fields[${fieldKey}][required]"]`);
+                const options = document.getElementById(`options_${fieldKey}`);
+                
+                if (checkbox) {
+                    checkbox.checked = true;
+                    if (options) options.style.display = 'block';
+                }
+                
+                // 必須項目として設定
+                if (requiredCheckbox && ['participant_name', 'contact_info', 'company_name'].includes(fieldKey)) {
+                    requiredCheckbox.checked = true;
+                }
+            });
+        }
+        
+        // フィールドの必須設定を切り替え
+        function toggleFieldRequired(fieldKey) {
+            const checkbox = document.querySelector(`input[name="form_fields[${fieldKey}][enabled]"]`);
+            const options = document.getElementById(`options_${fieldKey}`);
+            
+            if (checkbox.checked) {
+                options.style.display = 'block';
+            } else {
+                options.style.display = 'none';
+                // 必須チェックボックスもリセット
+                const requiredCheckbox = document.querySelector(`input[name="form_fields[${fieldKey}][required]"]`);
+                if (requiredCheckbox) requiredCheckbox.checked = false;
+            }
+        }
+        
+        // フォーム送信時の処理
+        document.getElementById('addEventForm').addEventListener('submit', function(e) {
+            // 選択されたフィールドの情報を収集
+            const formFields = {};
+            const enabledCheckboxes = document.querySelectorAll('input[name*="[enabled]"]:checked');
+            
+            enabledCheckboxes.forEach(checkbox => {
+                const fieldKey = checkbox.name.match(/form_fields\[(.+?)\]\[enabled\]/)[1];
+                const requiredCheckbox = document.querySelector(`input[name="form_fields[${fieldKey}][required]"]`);
+                
+                formFields[fieldKey] = {
+                    required: requiredCheckbox ? requiredCheckbox.checked : false
+                };
+            });
+            
+            // JSON形式でhidden inputに設定
+            let hiddenInput = document.getElementById('formFieldsData');
+            if (!hiddenInput) {
+                hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'form_fields';
+                hiddenInput.id = 'formFieldsData';
+                this.appendChild(hiddenInput);
+            }
+            hiddenInput.value = JSON.stringify(formFields);
+        });
+        
+        // イベント削除の確認
+        function confirmDeleteEvent(eventId, eventTitle) {
+            if (confirm(`「${eventTitle}」を削除してもよろしいですか？\n※この操作は取り消せません。予約者がいる場合、すべてキャンセルされます。`)) {
+                fetch(`/admin/event/${eventId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('イベントが削除されました');
+                        location.reload();
+                    } else {
+                        alert('削除に失敗しました: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('削除エラー:', error);
+                    alert('削除に失敗しました');
+                });
+            }
+        }
+        
+        // 初期状態の設定
+        toggleEventOptions();
+    </script>
+    
+    <style>
+        .form-fields-section {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .form-fields-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .form-field-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 1rem;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: flex-start;
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            margin-right: 8px;
+            margin-top: 2px;
+            width: auto;
+        }
+        
+        .checkbox-text {
+            flex: 1;
+            font-weight: bold;
+        }
+        
+        .checkbox-text small {
+            color: #666;
+            font-weight: normal;
+            margin-left: 0.5rem;
+        }
+        
+        .field-options {
+            margin-left: 20px;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-top: 0.5rem;
+        }
+        
+        .required-checkbox {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        
+        .required-checkbox input[type="checkbox"] {
+            margin-right: 6px;
+            width: auto;
+        }
+        
+        .field-description {
+            color: #666;
+            font-style: italic;
+            display: block;
+            margin-top: 0.5rem;
+        }
+        
+        .form-fields-info {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        @media (max-width: 768px) {
+            .form-fields-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</body>
+</html>
