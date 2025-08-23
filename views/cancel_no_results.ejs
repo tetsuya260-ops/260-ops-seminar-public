@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約が見つかりません - 予約システム</title>
+    <style>
+        body {
+            font-family: 'Noto Sans JP', Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        
+        .icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .message {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+        
+        .email-display {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            font-size: 1.1em;
+            color: #495057;
+            border: 1px solid #dee2e6;
+        }
+        
+        .suggestions {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .suggestions h3 {
+            margin-top: 0;
+            color: #856404;
+        }
+        
+        .suggestions ul {
+            color: #856404;
+            margin: 10px 0;
+        }
+        
+        .suggestions li {
+            margin: 8px 0;
+        }
+        
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .button.secondary {
+            background: #6c757d;
+        }
+        
+        .button.secondary:hover {
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🔍</div>
+        <h1>予約が見つかりませんでした</h1>
+        
+        <div class="message">
+            入力されたメールアドレスに該当する有効な予約が見つかりませんでした。
+        </div>
+        
+        <div class="email-display">
+            <%= email %>
+        </div>
+        
+        <div class="suggestions">
+            <h3>💡 考えられる原因</h3>
+            <ul>
+                <li>入力されたメールアドレスが間違っている</li>
+                <li>予約時に別のメールアドレスを使用した</li>
+                <li>既にキャンセル済みの予約である</li>
+                <li>予約が存在しない</li>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <a href="/cancel" class="button secondary">別のメールアドレスで再検索</a>
+            <a href="/" class="button">トップページに戻る</a>
+        </div>
+    </div>
+</body>
+</html>

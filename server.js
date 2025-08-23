@@ -286,6 +286,53 @@ app.post('/cancel', (req, res) => {
   });
 });
 
+// ルート: キャンセルページ表示
+app.get('/cancel', (req, res) => {
+  res.render('cancel');
+});
+
+// ルート: メールアドレスでキャンセル
+app.post('/cancel-by-email', (req, res) => {
+  const { email } = req.body;
+  
+  if (!email) {
+    return res.status(400).send('メールアドレスが必要です');
+  }
+  
+  // メールアドレスから予約を検索
+  const searchQuery = `
+    SELECT r.*, e.title, e.date, e.time 
+    FROM reservations r
+    JOIN events e ON r.event_id = e.id
+    WHERE r.status = 'active' AND JSON_EXTRACT(r.reservation_data, '$.email') = ?
+    ORDER BY e.date DESC, e.time DESC
+  `;
+  
+  db.all(searchQuery, [email], (err, reservations) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send('データベースエラー');
+    }
+    
+    if (reservations.length === 0) {
+      return res.render('cancel_no_results', { email });
+    }
+    
+    // 予約データをパースして整形
+    reservations.forEach(reservation => {
+      reservation.formatted_date = moment(reservation.date).format('YYYY年MM月DD日');
+      reservation.formatted_time = reservation.time;
+      try {
+        reservation.parsed_data = JSON.parse(reservation.reservation_data);
+      } catch (e) {
+        reservation.parsed_data = {};
+      }
+    });
+    
+    res.render('cancel_list', { reservations, email });
+  });
+});
+
 // ルート: 管理者画面
 app.get('/admin', (req, res) => {
   const eventsQuery = `

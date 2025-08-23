@@ -40,6 +40,46 @@ header h1 {
     font-size: 1.1rem;
 }
 
+.header-actions {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.cancel-link, .admin-link {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    text-decoration: none;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.cancel-link {
+    background-color: #dc3545;
+    color: white;
+}
+
+.cancel-link:hover {
+    background-color: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(220, 53, 69, 0.3);
+}
+
+.admin-link {
+    background-color: #6c757d;
+    color: white;
+}
+
+.admin-link:hover {
+    background-color: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 10px rgba(108, 117, 125, 0.3);
+}
+
 .back-link {
     display: inline-block;
     color: #007bff;

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>予約一覧 - キャンセル選択</title>
+    <style>
+        body {
+            font-family: 'Noto Sans JP', Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .email-display {
+            background-color: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 1px solid #bbdefb;
+        }
+        
+        .reservation-card {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .reservation-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+        
+        .event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .event-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .event-datetime {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .reservation-code {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+        
+        .participant-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #555;
+            min-width: 120px;
+        }
+        
+        .info-value {
+            color: #333;
+            flex: 1;
+            text-align: right;
+        }
+        
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            color: #856404;
+        }
+        
+        .cancel-button {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .cancel-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+        
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 30px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        @media (max-width: 600px) {
+            .event-header {
+                flex-direction: column;
+            }
+            
+            .reservation-code {
+                margin-top: 10px;
+                align-self: flex-start;
+            }
+            
+            .info-row {
+                flex-direction: column;
+            }
+            
+            .info-value {
+                text-align: left;
+                margin-top: 3px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📋 予約一覧</h1>
+        <p class="subtitle">キャンセルしたい予約を選んでください</p>
+        
+        <div class="email-display">
+            <strong>メールアドレス:</strong> <%= email %>
+        </div>
+        
+        <% if (reservations.length > 0) { %>
+            <% reservations.forEach(reservation => { %>
+                <div class="reservation-card">
+                    <div class="event-header">
+                        <div>
+                            <div class="event-title"><%= reservation.title %></div>
+                            <div class="event-datetime">
+                                📅 <%= reservation.formatted_date %> 
+                                🕐 <%= reservation.formatted_time %>
+                            </div>
+                        </div>
+                        <div class="reservation-code">
+                            <%= reservation.reservation_code %>
+                        </div>
+                    </div>
+                    
+                    <div class="participant-info">
+                        <% if (reservation.parsed_data.participant_name) { %>
+                            <div class="info-row">
+                                <span class="info-label">参加者名</span>
+                                <span class="info-value"><%= reservation.parsed_data.participant_name %></span>
+                            </div>
+                        <% } %>
+                        
+                        <% if (reservation.parsed_data.company_name) { %>
+                            <div class="info-row">
+                                <span class="info-label">会社名</span>
+                                <span class="info-value"><%= reservation.parsed_data.company_name %></span>
+                            </div>
+                        <% } %>
+                        
+                        <% if (reservation.parsed_data.position) { %>
+                            <div class="info-row">
+                                <span class="info-label">役職</span>
+                                <span class="info-value"><%= reservation.parsed_data.position %></span>
+                            </div>
+                        <% } %>
+                        
+                        <% if (reservation.parsed_data.phone) { %>
+                            <div class="info-row">
+                                <span class="info-label">電話番号</span>
+                                <span class="info-value"><%= reservation.parsed_data.phone %></span>
+                            </div>
+                        <% } %>
+                        
+                        <div class="info-row">
+                            <span class="info-label">予約日時</span>
+                            <span class="info-value"><%= new Date(reservation.created_at).toLocaleString('ja-JP') %></span>
+                        </div>
+                    </div>
+                    
+                    <div class="warning">
+                        <strong>⚠️ ご注意:</strong> キャンセルすると元に戻すことはできません。
+                    </div>
+                    
+                    <form action="/cancel" method="POST" style="margin: 0;" onsubmit="return confirmCancel('<%= reservation.title %>', '<%= reservation.reservation_code %>')">
+                        <input type="hidden" name="reservation_code" value="<%= reservation.reservation_code %>">
+                        <button type="submit" class="cancel-button">この予約をキャンセルする</button>
+                    </form>
+                </div>
+            <% }); %>
+        <% } else { %>
+            <div style="text-align: center; padding: 40px; color: #666;">
+                <div style="font-size: 3em; margin-bottom: 20px;">😔</div>
+                <p>該当する予約が見つかりませんでした。</p>
+            </div>
+        <% } %>
+        
+        <a href="/cancel" class="back-link">← 別の方法で検索する</a>
+    </div>
+
+    <script>
+        function confirmCancel(eventTitle, reservationCode) {
+            return confirm(`以下の予約をキャンセルしてもよろしいですか？\n\nイベント: ${eventTitle}\n予約コード: ${reservationCode}\n\n※この操作は取り消すことができません。`);
+        }
+    </script>
+</body>
+</html>
