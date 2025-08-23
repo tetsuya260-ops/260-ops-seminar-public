@@ -25,7 +25,15 @@
                 </div>
             </div>
             
-            <form action="/book" method="POST" class="booking-form" id="bookingForm">
+            <!-- タブナビゲーション -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" onclick="switchTab('booking')">📝 新規予約</button>
+                <button class="tab-btn" onclick="switchTab('cancel')">🚫 予約キャンセル</button>
+            </div>
+            
+            <!-- 予約フォーム -->
+            <div id="booking-tab" class="tab-content active">
+                <form action="/book" method="POST" class="booking-form" id="bookingForm">
                 <input type="hidden" name="event_id" value="<%= event.id %>">
                 
                 <!-- 参加方法選択（選択肢がある場合） -->
@@ -105,19 +113,74 @@
                     </div>
                 <% }); %>
                 
-                <button type="submit" class="submit-btn">予約を確定する</button>
-            </form>
+                    <button type="submit" class="submit-btn">予約を確定する</button>
+                </form>
+                
+                <div class="notice">
+                    <h3>ご注意事項</h3>
+                    <ul>
+                        <li>予約確定後、予約コードが発行されます。当日までに大切に保管してください。</li>
+                        <li>キャンセルをご希望の場合は、右のタブからキャンセルできます。</li>
+                        <li>定員に達し次第、受付を終了いたします。</li>
+                        <% if (event.parsed_options && event.parsed_options.length > 0) { %>
+                            <li>参加方法によって料金が異なる場合があります。</li>
+                        <% } %>
+                    </ul>
+                </div>
+            </div>
             
-            <div class="notice">
-                <h3>ご注意事項</h3>
-                <ul>
-                    <li>予約確定後、予約コードが発行されます。当日までに大切に保管してください。</li>
-                    <li>キャンセルをご希望の場合は、予約コードを使用してキャンセルできます。</li>
-                    <li>定員に達し次第、受付を終了いたします。</li>
-                    <% if (event.parsed_options && event.parsed_options.length > 0) { %>
-                        <li>参加方法によって料金が異なる場合があります。</li>
-                    <% } %>
-                </ul>
+            <!-- キャンセルタブ -->
+            <div id="cancel-tab" class="tab-content">
+                <div class="cancel-section">
+                    <div class="cancel-intro">
+                        <h3>🚫 予約のキャンセル</h3>
+                        <p>このイベントの予約をキャンセルする場合は、以下のいずれかの方法をご利用ください。</p>
+                    </div>
+                    
+                    <div class="cancel-methods">
+                        <div class="cancel-method" id="code-method">
+                            <h4>方法1: 予約コードでキャンセル</h4>
+                            <p class="method-desc">予約完了時に発行された8桁の予約コードをお持ちの方</p>
+                            <form action="/cancel" method="POST" class="cancel-form" id="codeForm">
+                                <div class="form-group">
+                                    <label for="reservation_code">予約コード</label>
+                                    <input type="text" 
+                                           id="reservation_code" 
+                                           name="reservation_code" 
+                                           placeholder="例：ABC12345" 
+                                           maxlength="8" 
+                                           pattern="[A-Za-z0-9]{8}"
+                                           class="code-input">
+                                    <small class="field-help">8桁の英数字を入力してください</small>
+                                </div>
+                                <button type="submit" class="cancel-btn">この予約をキャンセルする</button>
+                            </form>
+                        </div>
+                        
+                        <div class="method-divider">または</div>
+                        
+                        <div class="cancel-method" id="email-method">
+                            <h4>方法2: メールアドレスで予約を検索</h4>
+                            <p class="method-desc">予約時に登録したメールアドレスから予約を検索</p>
+                            <form action="/cancel-by-email" method="POST" class="cancel-form" id="emailForm">
+                                <div class="form-group">
+                                    <label for="cancel_email">メールアドレス</label>
+                                    <input type="email" 
+                                           id="cancel_email" 
+                                           name="email" 
+                                           placeholder="example@email.com"
+                                           class="email-input">
+                                    <small class="field-help">予約時に登録されたメールアドレスを入力してください</small>
+                                </div>
+                                <button type="submit" class="search-btn">予約を検索する</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="cancel-warning">
+                        <p><strong>⚠️ ご注意:</strong> キャンセルされた予約は元に戻すことができません。</p>
+                    </div>
+                </div>
             </div>
         </main>
         
@@ -127,6 +190,52 @@
     </div>
     
     <script>
+        // タブ切り替え機能
+        function switchTab(tabName) {
+            // すべてのタブボタンを非アクティブにする
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // すべてのタブコンテンツを非表示にする
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // 選択されたタブをアクティブにする
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+        
+        // 予約コードの自動大文字変換
+        document.getElementById('reservation_code').addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+        
+        // キャンセルフォームの確認
+        document.getElementById('codeForm').addEventListener('submit', function(e) {
+            const code = document.getElementById('reservation_code').value;
+            if (code.length !== 8) {
+                e.preventDefault();
+                alert('予約コードは8桁で入力してください。');
+                return;
+            }
+            
+            if (!confirm(`予約コード「${code}」の予約をキャンセルしてもよろしいですか？\n\n※この操作は取り消すことができません。`)) {
+                e.preventDefault();
+            }
+        });
+        
+        // メールアドレス検索フォームの確認
+        document.getElementById('emailForm').addEventListener('submit', function(e) {
+            const email = document.getElementById('cancel_email').value;
+            if (!validateEmail(email)) {
+                e.preventDefault();
+                alert('正しいメールアドレスを入力してください。');
+                return;
+            }
+        });
+        
         // フォームバリデーション
         document.getElementById('bookingForm').addEventListener('submit', function(e) {
             const inputs = this.querySelectorAll('input[required], select[required], textarea[required]');
