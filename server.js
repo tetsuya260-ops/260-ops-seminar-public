@@ -370,7 +370,7 @@ app.get('/admin', (req, res) => {
 
 // ルート: イベント追加処理（カスタムフォーム対応）
 app.post('/admin/add-event', (req, res) => {
-  const { title, description, date, time, capacity, event_type, participation_options, form_fields } = req.body;
+  const { title, description, date, time, capacity, event_type, participation_options, form_fields, venue_type, venue_name, venue_address, online_meeting_url, online_meeting_id, online_meeting_password } = req.body;
   
   if (!title || !date || !time) {
     return res.status(400).send('必須項目を入力してください');
@@ -396,8 +396,8 @@ app.post('/admin/add-event', (req, res) => {
   }
   
   const insertQuery = `
-    INSERT INTO events (title, description, date, time, capacity, event_type, participation_options, form_fields)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO events (title, description, date, time, capacity, event_type, participation_options, form_fields, venue_type, venue_name, venue_address, online_meeting_url, online_meeting_id, online_meeting_password)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   
   db.run(insertQuery, [
@@ -408,7 +408,13 @@ app.post('/admin/add-event', (req, res) => {
     capacity || 5, 
     event_type || 'business',
     optionsJson,
-    formFieldsJson
+    formFieldsJson,
+    venue_type || 'physical',
+    venue_name || '',
+    venue_address || '',
+    online_meeting_url || '',
+    online_meeting_id || '',
+    online_meeting_password || ''
   ], function(err) {
     if (err) {
       console.error(err);

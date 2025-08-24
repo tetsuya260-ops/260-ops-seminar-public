@@ -63,6 +63,52 @@
                         <small class="form-help">各行に1つずつ選択肢を入力してください。料金も含めて記入できます。</small>
                     </div>
                     
+                    <!-- 開催場所情報 -->
+                    <div class="venue-section">
+                        <h3>📍 開催場所情報</h3>
+                        
+                        <div class="form-group">
+                            <label for="venue_type">開催形式 <span class="required">*</span></label>
+                            <select id="venue_type" name="venue_type" onchange="toggleVenueOptions()" required>
+                                <option value="physical">会場開催（対面）</option>
+                                <option value="online">オンライン開催（Zoom等）</option>
+                                <option value="hybrid">ハイブリッド開催（会場＋オンライン）</option>
+                            </select>
+                        </div>
+                        
+                        <div class="venue-physical" id="venuePhysical">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="venue_name">会場名</label>
+                                    <input type="text" id="venue_name" name="venue_name" placeholder="例：東京ビジネスセンター 会議室A">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="venue_address">会場住所</label>
+                                <input type="text" id="venue_address" name="venue_address" placeholder="例：東京都千代田区丸の内1-1-1 東京駅前ビル 5F">
+                            </div>
+                        </div>
+                        
+                        <div class="venue-online" id="venueOnline" style="display: none;">
+                            <div class="form-group">
+                                <label for="online_meeting_url">参加URL</label>
+                                <input type="url" id="online_meeting_url" name="online_meeting_url" placeholder="https://zoom.us/j/123456789">
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="online_meeting_id">ミーティングID</label>
+                                    <input type="text" id="online_meeting_id" name="online_meeting_id" placeholder="123 456 789">
+                                </div>
+                                <div class="form-group">
+                                    <label for="online_meeting_password">パスワード</label>
+                                    <input type="text" id="online_meeting_password" name="online_meeting_password" placeholder="password123">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <!-- フォーム項目設定 -->
                     <div class="form-group">
                         <label>予約フォームの項目設定</label>
@@ -246,6 +292,31 @@
                 if (requiredCheckbox) requiredCheckbox.checked = false;
             }
         }
+        
+        // 開催場所オプションの切り替え
+        function toggleVenueOptions() {
+            const venueType = document.getElementById('venue_type').value;
+            const physicalSection = document.getElementById('venuePhysical');
+            const onlineSection = document.getElementById('venueOnline');
+            
+            // すべて非表示にしてからリセット
+            physicalSection.style.display = 'none';
+            onlineSection.style.display = 'none';
+            
+            if (venueType === 'physical') {
+                physicalSection.style.display = 'block';
+            } else if (venueType === 'online') {
+                onlineSection.style.display = 'block';
+            } else if (venueType === 'hybrid') {
+                physicalSection.style.display = 'block';
+                onlineSection.style.display = 'block';
+            }
+        }
+        
+        // 初期化時に一度実行
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleVenueOptions();
+        });
         
         // フォーム送信時の処理
         document.getElementById('addEventForm').addEventListener('submit', function(e) {

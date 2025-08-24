@@ -1284,6 +1284,107 @@ footer a:hover {
         transform: rotate(90deg);
         margin: 0;
     }
+}
+
+/* 開催場所情報のスタイル */
+.venue-info {
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff;
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 0 8px 8px 0;
+}
+
+.venue-info p {
+    margin: 8px 0;
+    display: flex;
+    align-items: center;
+}
+
+.venue-name {
+    font-weight: bold;
+    color: #333;
+    font-size: 1.1em;
+}
+
+.venue-address {
+    color: #666;
+    font-size: 0.95em;
+}
+
+.online-info {
+    background-color: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+.online-info p {
+    margin: 6px 0;
+    font-size: 0.9em;
+}
+
+.meeting-link {
+    color: #1976d2;
+    text-decoration: none;
+    font-weight: bold;
+    word-break: break-all;
+}
+
+.meeting-link:hover {
+    text-decoration: underline;
+}
+
+.online-info code {
+    background-color: #f5f5f5;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+/* 管理者画面の場所セクション */
+.venue-section {
+    background-color: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.venue-section h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}
+
+.venue-physical, .venue-online {
+    transition: all 0.3s ease;
+}
+
+.venue-online {
+    background-color: #e3f2fd;
+    border: 1px solid #bbdefb;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+/* 開催タイプ別の色分け */
+.venue-info p:first-child {
+    font-weight: bold;
+    font-size: 1.05em;
+}
+
+.venue-info p:first-child .icon {
+    font-size: 1.2em;
+    margin-right: 8px;
+}
     
     .reservations-table-container {
         margin: 0 -10px;

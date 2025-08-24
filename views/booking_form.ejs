@@ -19,6 +19,42 @@
                 <div class="event-details">
                     <p><span class="icon">📅</span> <%= event.formatted_date %> <%= event.formatted_time %></p>
                     <p><span class="icon">👥</span> 残り <%= event.available_count %> 席 / 定員 <%= event.capacity %> 名</p>
+                    
+                    <!-- 開催場所情報 -->
+                    <div class="venue-info">
+                        <% if (event.venue_type === 'physical') { %>
+                            <p><span class="icon">📍</span> <strong>会場開催</strong></p>
+                        <% } else if (event.venue_type === 'online') { %>
+                            <p><span class="icon">💻</span> <strong>オンライン開催</strong></p>
+                        <% } else if (event.venue_type === 'hybrid') { %>
+                            <p><span class="icon">🔄</span> <strong>会場＋オンライン（ハイブリッド）</strong></p>
+                        <% } %>
+                        
+                        <% if (event.venue_name) { %>
+                            <p class="venue-name"><span class="icon">🏢</span> <%= event.venue_name %></p>
+                        <% } %>
+                        
+                        <% if (event.venue_address) { %>
+                            <p class="venue-address"><span class="icon">📍</span> <%= event.venue_address %></p>
+                        <% } %>
+                        
+                        <% if (event.venue_type === 'online' || event.venue_type === 'hybrid') { %>
+                            <% if (event.online_meeting_url) { %>
+                                <div class="online-info">
+                                    <p><span class="icon">🔗</span> <strong>参加URL:</strong> 
+                                        <a href="<%= event.online_meeting_url %>" target="_blank" class="meeting-link"><%= event.online_meeting_url %></a>
+                                    </p>
+                                    <% if (event.online_meeting_id) { %>
+                                        <p><span class="icon">🆔</span> <strong>ミーティングID:</strong> <code><%= event.online_meeting_id %></code></p>
+                                    <% } %>
+                                    <% if (event.online_meeting_password) { %>
+                                        <p><span class="icon">🔒</span> <strong>パスワード:</strong> <code><%= event.online_meeting_password %></code></p>
+                                    <% } %>
+                                </div>
+                            <% } %>
+                        <% } %>
+                    </div>
+                    
                     <% if (event.description) { %>
                         <p class="description"><%= event.description %></p>
                     <% } %>
