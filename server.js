@@ -11,17 +11,27 @@ let isPostgreSQL = false;
 if (process.env.DATABASE_URL) {
   // PostgreSQL使用
   console.log('Using PostgreSQL database');
-  const { pool, initializeDatabase } = require('./database/postgres-init');
-  db = pool;
-  isPostgreSQL = true;
-  
-  // PostgreSQL初期化
-  initializeDatabase()
-    .then(() => console.log('PostgreSQL database initialized successfully'))
-    .catch(err => {
-      console.error('PostgreSQL initialization failed:', err);
-      process.exit(1);
-    });
+  try {
+    const { pool, initializeDatabase } = require('./database/postgres-init');
+    db = pool;
+    isPostgreSQL = true;
+    
+    // PostgreSQL初期化
+    initializeDatabase()
+      .then(() => console.log('PostgreSQL database initialized successfully'))
+      .catch(err => {
+        console.error('PostgreSQL initialization failed, falling back to SQLite:', err);
+        // PostgreSQL接続に失敗した場合はSQLiteにフォールバック
+        console.log('Falling back to SQLite database');
+        db = require('./database/init');
+        isPostgreSQL = false;
+      });
+  } catch (err) {
+    console.error('PostgreSQL module loading failed, using SQLite:', err);
+    console.log('Using SQLite database as fallback');
+    db = require('./database/init');
+    isPostgreSQL = false;
+  }
 } else {
   // SQLite使用
   console.log('Using SQLite database');
