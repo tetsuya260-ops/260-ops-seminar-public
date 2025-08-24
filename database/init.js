@@ -1,8 +1,10 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-// データベースファイルのパス
-const dbPath = path.join(__dirname, '../booking_system.db');
+// データベースファイルのパス（本番環境対応）
+const dbPath = process.env.NODE_ENV === 'production' 
+  ? ':memory:'  // 本番環境：メモリ内データベース
+  : path.join(__dirname, '../booking_system.db'); // 開発環境：ファイル
 
 const db = new sqlite3.Database(dbPath);
 
