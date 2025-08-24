@@ -4,7 +4,22 @@ const path = require('path');
 const QRCode = require('qrcode');
 const moment = require('moment');
 moment.locale('ja'); // 日本語ロケールを設定
-const db = require('./database/init');
+// データベース設定（PostgreSQL/SQLite自動切り替え）
+let db;
+let isPostgreSQL = false;
+
+if (process.env.DATABASE_URL) {
+  // PostgreSQL使用
+  const { pool, initializeDatabase } = require('./database/postgres-init');
+  db = pool;
+  isPostgreSQL = true;
+  
+  // PostgreSQL初期化
+  initializeDatabase().catch(console.error);
+} else {
+  // SQLite使用
+  db = require('./database/init');
+}
 
 // 日付フォーマット関数（曜日付き）
 function formatDateWithWeekday(date) {
