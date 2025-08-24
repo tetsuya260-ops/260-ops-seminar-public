@@ -694,12 +694,17 @@ app.use((req, res) => {
   `);
 });
 
-// サーバー起動
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`柔軟な予約システムが起動しました: http://0.0.0.0:${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Database: ${process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite'}`);
-});
+// サーバー起動（Vercel対応）
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`柔軟な予約システムが起動しました: http://0.0.0.0:${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Database: ${process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite'}`);
+  });
 
-// サーバーのタイムアウトを延長（Renderでの問題対策）
-server.timeout = 0;
+  // サーバーのタイムアウトを延長
+  server.timeout = 0;
+}
+
+// Vercel serverless function用のエクスポート
+module.exports = app;

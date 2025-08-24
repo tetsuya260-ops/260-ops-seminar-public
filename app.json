@@ -1,0 +1,28 @@
+{
+  "name": "Seminar Booking System",
+  "description": "柔軟な予約受付システム",
+  "repository": "https://github.com/tetsuya260-ops/260-ops-seminar-public",
+  "keywords": ["nodejs", "express", "booking", "seminar"],
+  "image": "heroku/nodejs",
+  "addons": [
+    {
+      "plan": "heroku-postgresql:mini"
+    }
+  ],
+  "env": {
+    "NODE_ENV": {
+      "value": "production"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "eco"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}
