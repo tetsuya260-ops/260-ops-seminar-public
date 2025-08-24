@@ -29,8 +29,28 @@ if (process.env.DATABASE_URL) {
   } catch (err) {
     console.error('PostgreSQL module loading failed, using SQLite:', err);
     console.log('Using SQLite database as fallback');
-    db = require('./database/init');
-    isPostgreSQL = false;
+    try {
+      db = require('./database/init');
+      isPostgreSQL = false;
+    } catch (sqliteErr) {
+      console.error('SQLite initialization also failed:', sqliteErr);
+      console.log('Starting without database - check Render logs');
+      // 最小限のモックDBオブジェクトを作成
+      db = {
+        all: (query, params, callback) => {
+          if (typeof params === 'function') callback = params;
+          callback(new Error('Database not available'));
+        },
+        get: (query, params, callback) => {
+          if (typeof params === 'function') callback = params;
+          callback(new Error('Database not available'));
+        },
+        run: (query, params, callback) => {
+          if (typeof params === 'function') callback = params;
+          callback(new Error('Database not available'));
+        }
+      };
+    }
   }
 } else {
   // SQLite使用
@@ -51,7 +71,7 @@ function formatDateWithWeekday(date) {
 }
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 // ミドルウェア設定
 app.set('view engine', 'ejs');
@@ -59,6 +79,16 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+// ヘルスチェックエンドポイント
+app.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    database: isPostgreSQL ? 'PostgreSQL' : 'SQLite',
+    env: process.env.NODE_ENV || 'development'
+  });
+});
 
 // 予約コード生成関数
 function generateReservationCode() {
@@ -649,9 +679,27 @@ app.get('/admin/api/form-fields', (req, res) => {
   });
 });
 
+// エラーハンドリングミドルウェア
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).send('サーバーエラーが発生しました');
+});
+
+// 404ハンドラー
+app.use((req, res) => {
+  res.status(404).send(`
+    <h1>ページが見つかりません</h1>
+    <p>リクエストされたページ "${req.path}" は存在しません。</p>
+    <a href="/">トップページに戻る</a>
+  `);
+});
+
 // サーバー起動
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`柔軟な予約システムが起動しました: http://0.0.0.0:${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Database: ${process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite'}`);
 });
+
+// サーバーのタイムアウトを延長（Renderでの問題対策）
+server.timeout = 0;
