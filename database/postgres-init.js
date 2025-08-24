@@ -17,8 +17,8 @@ async function initializeDatabase() {
         id SERIAL PRIMARY KEY,
         title TEXT NOT NULL,
         description TEXT,
-        date TEXT NOT NULL,
-        time TEXT NOT NULL,
+        date DATE NOT NULL,
+        time TIME NOT NULL,
         capacity INTEGER DEFAULT 5,
         event_type TEXT DEFAULT 'business',
         participation_options TEXT,
@@ -203,7 +203,7 @@ async function initializeDatabase() {
           title: 'DXセミナー 基礎編',
           description: 'デジタルトランスフォーメーションの基礎を学ぶセミナーです。',
           date: '2024-12-20',
-          time: '14:00',
+          time: '14:00:00',
           event_type: 'business',
           participation_options: null,
           form_fields: JSON.stringify({
@@ -217,7 +217,7 @@ async function initializeDatabase() {
           title: 'AI活用セミナー',
           description: 'ビジネスでのAI活用方法について学ぶセミナーです。',
           date: '2024-12-25',
-          time: '10:00',
+          time: '10:00:00',
           event_type: 'business',
           participation_options: null,
           form_fields: JSON.stringify({
@@ -231,7 +231,7 @@ async function initializeDatabase() {
           title: '肉の会',
           description: '美味しいお肉を楽しむ会です。焼肉、ハンバーグ、ローストビーフなど様々な肉料理を味わいましょう。',
           date: '2024-12-15',
-          time: '11:45',
+          time: '11:45:00',
           event_type: 'personal',
           participation_options: JSON.stringify(['焼肉バイキング 5800円', '鉄板ハンバーグ 1800円', 'ローストビーフ 2500円', 'お肉の詰め合わせ 3200円']),
           form_fields: JSON.stringify({
@@ -259,6 +259,18 @@ async function initializeDatabase() {
       }
     }
 
+    // 既存のTEXT型のdateカラムをDATE型に変換
+    try {
+      await client.query(`
+        ALTER TABLE events 
+        ALTER COLUMN date TYPE DATE USING date::DATE,
+        ALTER COLUMN time TYPE TIME USING time::TIME
+      `);
+      console.log('Date/Time columns converted to proper types');
+    } catch (alterError) {
+      console.log('Column types already correct or conversion not needed:', alterError.message);
+    }
+
     console.log('PostgreSQL データベース初期化完了');
     
   } catch (error) {
@@ -279,6 +291,10 @@ function convertPlaceholders(query) {
 function convertSqliteFunctions(query) {
   // date('now') を CURRENT_DATE に変換
   query = query.replace(/date\('now'\)/g, 'CURRENT_DATE');
+  
+  // date >= date('now') パターンを修正
+  query = query.replace(/(\w+\.)?date\s*>=\s*date\('now'\)/g, '($1date)::date >= CURRENT_DATE');
+  query = query.replace(/(\w+\.)?date\s*>=\s*CURRENT_DATE/g, '($1date)::date >= CURRENT_DATE');
   
   // JSON_EXTRACT を PostgreSQL の JSON 演算子に変換
   query = query.replace(/JSON_EXTRACT\s*\(\s*([^,]+)\s*,\s*'\$\.([^']+)'\s*\)/g, '$1->>\'$2\'');
