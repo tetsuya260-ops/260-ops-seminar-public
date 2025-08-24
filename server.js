@@ -642,4 +642,6 @@ app.get('/admin/api/form-fields', (req, res) => {
 // サーバー起動
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`柔軟な予約システムが起動しました: http://0.0.0.0:${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Database: ${process.env.DATABASE_URL ? 'PostgreSQL' : 'SQLite'}`);
 });
