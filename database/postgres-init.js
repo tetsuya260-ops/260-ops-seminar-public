@@ -202,7 +202,7 @@ async function initializeDatabase() {
         {
           title: 'DXセミナー 基礎編',
           description: 'デジタルトランスフォーメーションの基礎を学ぶセミナーです。',
-          date: '2024-09-15',
+          date: '2024-12-20',
           time: '14:00',
           event_type: 'business',
           participation_options: null,
@@ -216,7 +216,7 @@ async function initializeDatabase() {
         {
           title: 'AI活用セミナー',
           description: 'ビジネスでのAI活用方法について学ぶセミナーです。',
-          date: '2024-09-20',
+          date: '2024-12-25',
           time: '10:00',
           event_type: 'business',
           participation_options: null,
@@ -230,7 +230,7 @@ async function initializeDatabase() {
         {
           title: '肉の会',
           description: '美味しいお肉を楽しむ会です。焼肉、ハンバーグ、ローストビーフなど様々な肉料理を味わいましょう。',
-          date: '2024-08-31',
+          date: '2024-12-15',
           time: '11:45',
           event_type: 'personal',
           participation_options: JSON.stringify(['焼肉バイキング 5800円', '鉄板ハンバーグ 1800円', 'ローストビーフ 2500円', 'お肉の詰め合わせ 3200円']),
@@ -269,8 +269,106 @@ async function initializeDatabase() {
   }
 }
 
+// SQLite の ? プレースホルダーを PostgreSQL の $1, $2, ... に変換
+function convertPlaceholders(query) {
+  let index = 1;
+  return query.replace(/\?/g, () => `$${index++}`);
+}
+
+// SQLiteとPostgreSQLの関数名の違いを変換
+function convertSqliteFunctions(query) {
+  // date('now') を CURRENT_DATE に変換
+  query = query.replace(/date\('now'\)/g, 'CURRENT_DATE');
+  
+  // JSON_EXTRACT を PostgreSQL の JSON 演算子に変換
+  query = query.replace(/JSON_EXTRACT\s*\(\s*([^,]+)\s*,\s*'\$\.([^']+)'\s*\)/g, '$1->>\'$2\'');
+  
+  return query;
+}
+
+// SQLite互換のアダプター関数を追加
+const sqliteCompatiblePool = {
+  // SELECT文で複数行を取得
+  all: (query, params, callback) => {
+    if (typeof params === 'function') {
+      callback = params;
+      params = [];
+    }
+    
+    // クエリを PostgreSQL 互換に変換
+    const pgQuery = convertSqliteFunctions(convertPlaceholders(query));
+    
+    pool.query(pgQuery, params)
+      .then(result => callback(null, result.rows))
+      .catch(err => {
+        console.error('PostgreSQL query error (all):', err);
+        console.error('Original query:', query);
+        console.error('Converted query:', pgQuery);
+        console.error('Params:', params);
+        callback(err);
+      });
+  },
+  
+  // SELECT文で1行のみ取得
+  get: (query, params, callback) => {
+    if (typeof params === 'function') {
+      callback = params;
+      params = [];
+    }
+    
+    // クエリを PostgreSQL 互換に変換
+    const pgQuery = convertSqliteFunctions(convertPlaceholders(query));
+    
+    pool.query(pgQuery, params)
+      .then(result => callback(null, result.rows[0] || null))
+      .catch(err => {
+        console.error('PostgreSQL query error (get):', err);
+        console.error('Original query:', query);
+        console.error('Converted query:', pgQuery);
+        console.error('Params:', params);
+        callback(err);
+      });
+  },
+  
+  // INSERT, UPDATE, DELETE文を実行
+  run: (query, params, callback) => {
+    if (typeof params === 'function') {
+      callback = params;
+      params = [];
+    }
+    
+    // クエリを PostgreSQL 互換に変換
+    let pgQuery = convertSqliteFunctions(convertPlaceholders(query));
+    
+    // INSERT文で RETURNING id を追加（lastID の取得用）
+    if (pgQuery.toLowerCase().startsWith('insert') && !pgQuery.toLowerCase().includes('returning')) {
+      pgQuery += ' RETURNING id';
+    }
+    
+    pool.query(pgQuery, params)
+      .then(result => {
+        // SQLiteのthis.changesとlastIDを模擬
+        const mockThis = {
+          changes: result.rowCount || 0,
+          lastID: result.rows && result.rows[0] ? result.rows[0].id : null
+        };
+        callback.call(mockThis, null);
+      })
+      .catch(err => {
+        console.error('PostgreSQL query error (run):', err);
+        console.error('Original query:', query);
+        console.error('Converted query:', pgQuery);
+        console.error('Params:', params);
+        callback(err);
+      });
+  },
+  
+  // 元のプールへの参照も保持
+  _pool: pool
+};
+
 // データベース接続プールをエクスポート
 module.exports = {
-  pool,
+  pool: sqliteCompatiblePool,
   initializeDatabase
 };
