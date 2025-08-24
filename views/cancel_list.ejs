@@ -195,7 +195,9 @@
                         <div>
                             <div class="event-title"><%= reservation.title %></div>
                             <div class="event-datetime">
-                                📅 <%= reservation.formatted_date %> 
+                                📅 <span class="date-with-weekday <%= reservation.weekday_class %>">
+                                    <%= reservation.formatted_date_with_weekday %>
+                                </span>
                                 🕐 <%= reservation.formatted_time %>
                             </div>
                         </div>
@@ -235,7 +237,7 @@
                         
                         <div class="info-row">
                             <span class="info-label">予約日時</span>
-                            <span class="info-value"><%= new Date(reservation.created_at).toLocaleString('ja-JP') %></span>
+                            <span class="info-value"><%= reservation.formatted_created_date %></span>
                         </div>
                     </div>
                     

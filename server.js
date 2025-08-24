@@ -3,7 +3,20 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const QRCode = require('qrcode');
 const moment = require('moment');
+moment.locale('ja'); // 日本語ロケールを設定
 const db = require('./database/init');
+
+// 日付フォーマット関数（曜日付き）
+function formatDateWithWeekday(date) {
+  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+  const momentDate = moment(date);
+  return {
+    formatted_date: momentDate.format('YYYY年MM月DD日'),
+    formatted_date_with_weekday: momentDate.format('YYYY年MM月DD日') + `（${weekdays[momentDate.day()]}）`,
+    weekday: weekdays[momentDate.day()],
+    weekday_class: momentDate.day() === 0 ? 'sunday' : momentDate.day() === 6 ? 'saturday' : 'weekday'
+  };
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -44,9 +57,13 @@ app.get('/', (req, res) => {
       return res.status(500).send('データベースエラー');
     }
     
-    // 日付のフォーマット
+    // 日付のフォーマット（曜日付き）
     events.forEach(event => {
-      event.formatted_date = moment(event.date).format('YYYY年MM月DD日');
+      const dateInfo = formatDateWithWeekday(event.date);
+      event.formatted_date = dateInfo.formatted_date;
+      event.formatted_date_with_weekday = dateInfo.formatted_date_with_weekday;
+      event.weekday = dateInfo.weekday;
+      event.weekday_class = dateInfo.weekday_class;
       event.formatted_time = event.time;
       // 参加方法選択肢をパース
       if (event.participation_options) {
@@ -90,7 +107,11 @@ app.get('/event/:id', (req, res) => {
       return res.render('booking_full', { event });
     }
     
-    event.formatted_date = moment(event.date).format('YYYY年MM月DD日');
+    const dateInfo = formatDateWithWeekday(event.date);
+    event.formatted_date = dateInfo.formatted_date;
+    event.formatted_date_with_weekday = dateInfo.formatted_date_with_weekday;
+    event.weekday = dateInfo.weekday;
+    event.weekday_class = dateInfo.weekday_class;
     event.formatted_time = event.time;
     
     // 参加方法選択肢をパース
@@ -244,7 +265,11 @@ app.get('/confirmation/:code', (req, res) => {
       return res.status(404).send('予約が見つかりません');
     }
     
-    reservation.formatted_date = moment(reservation.date).format('YYYY年MM月DD日');
+    const dateInfo = formatDateWithWeekday(reservation.date);
+    reservation.formatted_date = dateInfo.formatted_date;
+    reservation.formatted_date_with_weekday = dateInfo.formatted_date_with_weekday;
+    reservation.weekday = dateInfo.weekday;
+    reservation.weekday_class = dateInfo.weekday_class;
     reservation.formatted_time = reservation.time;
     
     // 予約データをパース
@@ -320,8 +345,18 @@ app.post('/cancel-by-email', (req, res) => {
     
     // 予約データをパースして整形
     reservations.forEach(reservation => {
-      reservation.formatted_date = moment(reservation.date).format('YYYY年MM月DD日');
+      const dateInfo = formatDateWithWeekday(reservation.date);
+      reservation.formatted_date = dateInfo.formatted_date;
+      reservation.formatted_date_with_weekday = dateInfo.formatted_date_with_weekday;
+      reservation.weekday = dateInfo.weekday;
+      reservation.weekday_class = dateInfo.weekday_class;
       reservation.formatted_time = reservation.time;
+      
+      // 予約作成日時のフォーマット（曜日付き）
+      const createdDate = new Date(reservation.created_at);
+      const createdDateInfo = formatDateWithWeekday(createdDate.toISOString().split('T')[0]);
+      reservation.formatted_created_date = createdDateInfo.formatted_date_with_weekday + 
+        ' ' + createdDate.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
       try {
         reservation.parsed_data = JSON.parse(reservation.reservation_data);
       } catch (e) {
@@ -352,7 +387,11 @@ app.get('/admin', (req, res) => {
     }
     
     events.forEach(event => {
-      event.formatted_date = moment(event.date).format('YYYY年MM月DD日');
+      const dateInfo = formatDateWithWeekday(event.date);
+      event.formatted_date = dateInfo.formatted_date;
+      event.formatted_date_with_weekday = dateInfo.formatted_date_with_weekday;
+      event.weekday = dateInfo.weekday;
+      event.weekday_class = dateInfo.weekday_class;
       event.formatted_time = event.time;
     });
     
@@ -490,7 +529,11 @@ app.get('/admin/event/:id', (req, res) => {
         return res.status(500).send('データベースエラー');
       }
       
-      event.formatted_date = moment(event.date).format('YYYY年MM月DD日');
+      const dateInfo = formatDateWithWeekday(event.date);
+      event.formatted_date = dateInfo.formatted_date;
+      event.formatted_date_with_weekday = dateInfo.formatted_date_with_weekday;
+      event.weekday = dateInfo.weekday;
+      event.weekday_class = dateInfo.weekday_class;
       event.formatted_time = event.time;
       
       // 予約データをパース

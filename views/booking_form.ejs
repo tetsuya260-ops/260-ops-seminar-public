@@ -17,7 +17,12 @@
             <div class="event-summary <%= event.event_type %>">
                 <h2><%= event.title %></h2>
                 <div class="event-details">
-                    <p><span class="icon">📅</span> <%= event.formatted_date %> <%= event.formatted_time %></p>
+                    <p><span class="icon">📅</span> 
+                        <span class="date-with-weekday <%= event.weekday_class %>">
+                            <%= event.formatted_date_with_weekday %>
+                        </span> 
+                        <span class="time"><%= event.formatted_time %></span>
+                    </p>
                     <p><span class="icon">👥</span> 残り <%= event.available_count %> 席 / 定員 <%= event.capacity %> 名</p>
                     
                     <!-- 開催場所情報 -->

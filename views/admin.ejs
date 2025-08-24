@@ -183,7 +183,10 @@
                                 <div class="event-info">
                                     <p class="date-time">
                                         <span class="icon">📅</span>
-                                        <%= event.formatted_date %> <%= event.formatted_time %>
+                                        <span class="date-with-weekday <%= event.weekday_class %>">
+                                            <%= event.formatted_date_with_weekday %>
+                                        </span> 
+                                        <span class="time"><%= event.formatted_time %></span>
                                     </p>
                                     <% if (event.description) { %>
                                         <p class="description"><%= event.description %></p>

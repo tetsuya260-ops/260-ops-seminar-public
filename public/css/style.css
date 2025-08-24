@@ -1390,3 +1390,45 @@ footer a:hover {
         margin: 0 -10px;
     }
 }
+/* 曜日表示のスタイル */
+.date-with-weekday {
+    font-weight: bold;
+}
+
+.date-with-weekday.sunday {
+    color: #dc3545; /* 日曜日は赤 */
+}
+
+.date-with-weekday.saturday {
+    color: #007bff; /* 土曜日は青 */
+}
+
+.date-with-weekday.weekday {
+    color: #333; /* 平日は通常色 */
+}
+
+.time {
+    font-weight: bold;
+    color: #28a745;
+    margin-left: 8px;
+}
+
+/* メインページの日付表示 */
+.date-time .date-with-weekday {
+    margin-right: 8px;
+}
+
+/* 管理者画面の日付表示 */
+.admin-event-card .date-time .date-with-weekday {
+    margin-right: 6px;
+}
+
+/* 予約フォームの日付表示 */
+.booking-form .date-with-weekday {
+    margin-right: 10px;
+}
+
+/* キャンセル一覧の日付表示 */
+.cancel_list .event-datetime .date-with-weekday {
+    margin-right: 8px;
+}
